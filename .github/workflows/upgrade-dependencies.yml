@@ -1,0 +1,51 @@
+name: Upgrade dependencies
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 * * 5' # Every Friday @ 5AM
+
+jobs:
+  upgrade:
+    name: Upgrade dependencies
+    runs-on: ubuntu-latest
+    env:
+      BRANCH_NAME: auto-dependency-upgrades
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          # This is required to run CI workflow on PR created by this workflow
+          # https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#push-using-ssh-deploy-keys
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Upgrade dependencies
+        run: cargo update
+      - name: Run tests
+        run: cargo test --verbose
+      - name: Detect changes
+        id: changes
+        run:
+          # This output boolean tells us if the dependencies have actually changed
+          echo "::set-output name=count::$(git status --porcelain=v1 2>/dev/null | wc -l)"
+      - name: Commit & push changes
+        if: steps.changes.outputs.count > 0 # Only push if changes exist
+        run: |
+          git config user.name httpz-bot
+          git config user.email ghactions@otbeaumont.me
+          git add .
+          git commit -m "build(deps): upgrade dependencies"
+          git push -f origin ${{ github.ref_name }}:$BRANCH_NAME
+      - name: Open pull request if needed
+        if: steps.changes.outputs.count > 0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Only open a PR if the branch is not attached to an existing one
+        run: |
+          PR=$(gh pr list --head $BRANCH_NAME --json number -q '.[0].number')
+          if [ -z $PR ]; then
+            gh pr create \
+            --head $BRANCH_NAME \
+            --title "Upgrade dependencies" \
+            --body "Full log: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          else
+            echo "Pull request already exists, won't create a new one."
+          fi
