@@ -1,4 +1,4 @@
-name: Audit dependencies
+name: Audit
 
 on:
   workflow_dispatch:

@@ -1,4 +1,4 @@
-name: Clippy checks
+name: Clippy
 
 on:
   workflow_dispatch:

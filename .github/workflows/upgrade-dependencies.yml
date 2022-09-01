@@ -17,8 +17,10 @@ jobs:
           # This is required to run CI workflow on PR created by this workflow
           # https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#push-using-ssh-deploy-keys
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Install cargo-quickinstall
+        run: cargo install cargo-quickinstall
       - name: Install Cargo Edit
-        run: cargo install cargo-edit
+        run: cargo quickinstall cargo-edit
       - name: Upgrade dependencies
         run: cargo upgrade --workspace --to-lockfile
       - name: Run tests
