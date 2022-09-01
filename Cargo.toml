@@ -1,12 +1,36 @@
 [package]
 name = "httpz"
-description = "todo"
 version = "0.1.0"
+description = "Code once, support every Rust webserver!"
+authors = ["Oscar Beaumont <oscar@otbeaumont.me>"]
 edition = "2021"
+license = "MIT"
+
+homepage = "https://github.com/oscartbeaumont/httpz"
+documentation = "https://docs.rs/httpz"
+repository = "https://github.com/oscartbeaumont/httpz"
+readme = "README.md"
+
+keywords = ["httpz", "async", "web", "http", "websockets"]
+categories = ["network-programming", "web-programming", "web-programming::http-server", "asynchronous", "development-tools"]
+
+[[example]]
+name = "basic"
+required-features = ["axum"]
 
 [features]
-default = ["axum"] # TODO: Set this to empty
-axum = ["dep:axum", "dep:axum-core"]
+default = []
+ws = [] # ["dep:async-tungstenite", "dep:sha1", "dep:base64", "tokio"] # TODO: This shouldn't force tokio
+
+async-tungstenite = []
+
+# Async runtimes
+tokio-ws = ["dep:async-tungstenite", "async-tungstenite/tokio-runtime", "dep:sha1", "dep:base64", "dep:tokio", "ws"]
+# TODO: Support other async runtimes
+
+# Webservers
+axum = ["dep:axum"]
+hyper = [] # TODO: "dep:hyper"
 actix-web = ["dep:actix-web"]
 poem = ["dep:poem"]
 rocket = ["dep:rocket"]
@@ -16,7 +40,6 @@ warp = ["dep:warp"]
 # Webservers
 actix-web = { version = "4.1.0", optional = true, features = [] }
 axum = { version = "0.5.13", optional = true, features = [] }
-axum-core = { version = "0.2.7", optional = true, features = [] }
 poem = { version = "1.3.36", optional = true, features = [] }
 rocket = { version = "0.5.0-rc.2", optional = true, features = [] }
 warp = { version = "0.3.2", optional = true, features = [] }
@@ -24,9 +47,16 @@ warp = { version = "0.3.2", optional = true, features = [] }
 # Core
 cookie = { version = "0.16.0", features = ["percent-encode"] }
 http = { version = "0.2.8", features = [] }
+form_urlencoded = "1.0.1"
+async-tungstenite = { version = "0.17.2", optional = true }
+sha1 = { version = "0.10.1", optional = true }
+base64 = { version = "0.13.0", optional = true }
+tokio = { version = "1.20.1", features = [], default-features = false, optional = true }
+hyper = "0.14.20" # TODO: Remove this if possible or feature gate it. I think Axum needs it.
+futures = "0.3.23"
 
 [dev-dependencies]
-tokio = { version = "1.20.1", features = ["macros"] }
+tokio = { version = "1.20.1", features = ["macros", "rt-multi-thread"] }
 axum = { version = "0.5.13", features = [] }
 tower = { version = "0.4.13", features = [] }
 hyper = { version = "0.14.20", features = [] }

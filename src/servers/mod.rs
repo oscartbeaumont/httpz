@@ -1,21 +1,19 @@
+/// support for [Actix Web](https://actix.rs)
 #[cfg(feature = "actix-web")]
-mod actix_web;
-#[cfg(feature = "axum")]
-mod axum;
-#[cfg(feature = "poem")]
-mod poem;
-#[cfg(feature = "rocket")]
-mod rocket;
-#[cfg(feature = "warp")]
-mod warp;
+pub mod actix_web;
 
-#[cfg(feature = "actix-web")]
-pub use self::actix_web::*;
+/// support for [Axum](https://github.com/tokio-rs/axum)
 #[cfg(feature = "axum")]
-pub use self::axum::*;
+pub mod axum;
+
+/// support for [Poem](https://github.com/poem-web/poem)
 #[cfg(feature = "poem")]
-pub use self::poem::*;
+pub mod poem;
+
+/// support for [Rocket](https://rocket.rs)
 #[cfg(feature = "rocket")]
-pub use self::rocket::*;
+pub mod rocket;
+
+/// support for [Warp](https://github.com/seanmonstar/warp)
 #[cfg(feature = "warp")]
-pub use self::warp::*;
+pub mod warp;

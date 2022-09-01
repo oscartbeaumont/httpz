@@ -1,6 +1,8 @@
 use std::fmt::{Display, Formatter};
 
+/// a generic error type to represent all possible errors from httpz
 pub enum Error {
+    /// an error that occurred in the HTTP library
     HTTPError(http::Error),
 }
 
