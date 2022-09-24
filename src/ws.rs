@@ -1,5 +1,9 @@
-use async_tungstenite::{self, tungstenite::protocol, WebSocketStream};
-use futures::{Future, StreamExt};
+use async_tungstenite::{
+    self,
+    tungstenite::{self, protocol},
+    WebSocketStream,
+};
+use futures::{Future, Sink, Stream};
 use http::{
     header::{self, HeaderName},
     HeaderValue, Method, Response, StatusCode,
@@ -15,61 +19,87 @@ const WEBSOCKET: HeaderValue = HeaderValue::from_static("websocket");
 pub use async_tungstenite::tungstenite::Message;
 
 /// TODO
+pub trait Websocket:
+    Sink<Message, Error = tungstenite::Error>
+    + Stream<Item = Result<async_tungstenite::tungstenite::Message, tungstenite::Error>>
+    + Send
+    + Unpin
+{
+}
+
+impl<T> Websocket for T where
+    T: Sink<Message, Error = tungstenite::Error>
+        + Stream<Item = Result<async_tungstenite::tungstenite::Message, tungstenite::Error>>
+        + Send
+        + Unpin
+{
+}
+
+/// TODO
 pub struct WebsocketUpgrade {}
 
 impl WebsocketUpgrade {
-    // TODO: Error handling + unit testing this code
-    pub fn from_req<TFunc, TResult>(
+    /// TODO: Error handling + unit testing this code
+    pub fn from_req<TFut>(
         mut req: ConcreteRequest,
-        on_msg: TFunc,
-    ) -> Result<Response<Vec<u8>>, ()>
+        mut handler: impl for<'a> FnOnce(Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,
+    ) -> Result<Response<Vec<u8>>, crate::Error>
     where
-        TFunc: Fn(Message) -> TResult + Send + Sync + 'static,
-        TResult: Future<Output = ()>,
+        TFut: Future<Output = ()> + Send + 'static,
     {
         if req.method() != Method::GET {
-            unimplemented!(); // return Err(MethodNotGet.into());
+            return Ok(Response::builder()
+                .status(StatusCode::METHOD_NOT_ALLOWED)
+                .body(vec![])?);
         }
 
         if !header_contains(&req, header::CONNECTION, "upgrade") {
-            unimplemented!(); //return Err(InvalidConnectionHeader.into());
+            return Ok(Response::builder()
+                .status(StatusCode::BAD_REQUEST)
+                .body(vec![])?);
         }
 
         if !header_eq(&req, header::UPGRADE, "websocket") {
-            unimplemented!(); //return Err(InvalidUpgradeHeader.into());
+            return Ok(Response::builder()
+                .status(StatusCode::BAD_REQUEST)
+                .body(vec![])?);
         }
 
         if !header_eq(&req, header::SEC_WEBSOCKET_VERSION, "13") {
-            unimplemented!(); //return Err(InvalidWebSocketVersionHeader.into());
+            return Ok(Response::builder()
+                .status(StatusCode::BAD_REQUEST)
+                .body(vec![])?);
         }
 
-        let sec_websocket_key = req.headers_mut().remove(header::SEC_WEBSOCKET_KEY).unwrap();
-        // .ok_or(WebSocketKeyHeaderMissing)?;
+        let sec_websocket_key = match req.headers_mut().remove(header::SEC_WEBSOCKET_KEY) {
+            Some(sec_websocket_key) => sec_websocket_key,
+            None => {
+                return Ok(Response::builder()
+                    .status(StatusCode::BAD_REQUEST)
+                    .body(vec![])?)
+            }
+        };
 
-        let on_upgrade = req.extensions_mut().remove::<OnUpgrade>().unwrap();
-        //     // .ok_or(ConnectionNotUpgradable)?;
+        let on_upgrade = match req.extensions_mut().remove::<OnUpgrade>() {
+            Some(on_upgrade) => on_upgrade,
+            None => {
+                return Ok(Response::builder()
+                    .status(StatusCode::BAD_REQUEST)
+                    .body(vec![])?)
+            }
+        };
 
-        let sec_websocket_protocol = req.headers().get(header::SEC_WEBSOCKET_PROTOCOL).cloned();
+        // let sec_websocket_protocol = req.headers().get(header::SEC_WEBSOCKET_PROTOCOL).cloned();
 
         tokio::spawn(async move {
             let upgraded = on_upgrade.await.expect("connection upgrade failed");
 
             let upgraded = async_tungstenite::tokio::TokioAdapter::new(upgraded);
 
-            let mut socket =
-                WebSocketStream::from_raw_socket(upgraded, protocol::Role::Server, None) // TODO: Specify context: Some(config)
-                    .await;
+            let socket = WebSocketStream::from_raw_socket(upgraded, protocol::Role::Server, None) // TODO: Specify context: Some(config)
+                .await;
 
-            while let Some(msg) = socket.next().await {
-                match msg {
-                    Ok(msg) => {
-                        on_msg(msg);
-                    }
-                    Err(e) => {
-                        eprintln!("websocket error: {}", e); // TODO
-                    }
-                }
-            }
+            handler(Box::new(socket)).await;
         });
 
         let builder = Response::builder()
@@ -85,7 +115,7 @@ impl WebsocketUpgrade {
         //     builder = builder.header(header::SEC_WEBSOCKET_PROTOCOL, protocol);
         // }
 
-        Ok(builder.body([].to_vec()).unwrap())
+        Ok(builder.body([].to_vec())?)
     }
 }
 
