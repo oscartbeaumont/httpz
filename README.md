@@ -28,7 +28,7 @@ async fn handler<'a>(
 // Define a httpz generic endpoint. handler MUST be a function, closures will not work.
 let endpoint = GenericEndpoint::new((), [Method::GET, Method::POST], handler); 
 
-// Attach your endpoint to any HTTP server you like (Axum shown here).
+// Attach your generic endpoint to any HTTP webserver you like (Axum shown here).
 let app = axum::Router::new().route("/", endpoint.axum());
 ```
 
