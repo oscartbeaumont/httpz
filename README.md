@@ -8,6 +8,8 @@
 
 <br>
 
+This project is a 🚧 work in progress 🚧. Currently it is designed around the goals of [rspc](https://rspc.otbeaumont.me) but feel free to reach to me if you want to collaborate on using it in your own project.
+
 ## Usage
 
 ```rust
