@@ -24,8 +24,8 @@ where
 
         let mut method_filter = MethodFilter::empty();
         for method in methods.as_ref().iter() {
-            method_filter.insert(MethodFilter::try_from(method.clone()).unwrap());
             // TODO: Error handling
+            method_filter.insert(MethodFilter::try_from(method.clone()).unwrap());
         }
 
         on(method_filter, |parts: Parts, body: Bytes| async move {
