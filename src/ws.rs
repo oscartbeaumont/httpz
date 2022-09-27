@@ -44,7 +44,10 @@ impl WebsocketUpgrade {
     pub fn from_req<TFut>(
         mut req: ConcreteRequest,
         cookies: CookieJar,
-        handler: impl for<'a> FnOnce(Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,
+        handler: impl for<'a> FnOnce(ConcreteRequest, Box<dyn Websocket + Send>) -> TFut
+            + Send
+            + Sync
+            + 'static,
     ) -> EndpointResult
     where
         TFut: Future<Output = ()> + Send + 'static,
@@ -119,7 +122,7 @@ impl WebsocketUpgrade {
             let socket = WebSocketStream::from_raw_socket(upgraded, protocol::Role::Server, None) // TODO: Specify context: Some(config)
                 .await;
 
-            handler(Box::new(socket)).await;
+            handler(req, Box::new(socket)).await;
         });
 
         let builder = Response::builder()
