@@ -3,6 +3,7 @@ use async_tungstenite::{
     tungstenite::{self, protocol},
     WebSocketStream,
 };
+use cookie::CookieJar;
 use futures::{Future, Sink, Stream};
 use http::{
     header::{self, HeaderName},
@@ -11,7 +12,7 @@ use http::{
 use hyper::upgrade::OnUpgrade;
 use sha1::{Digest, Sha1};
 
-use crate::ConcreteRequest;
+use crate::{ConcreteRequest, EndpointResult};
 
 const UPGRADE: HeaderValue = HeaderValue::from_static("upgrade");
 const WEBSOCKET: HeaderValue = HeaderValue::from_static("websocket");
@@ -42,50 +43,69 @@ impl WebsocketUpgrade {
     /// TODO: Error handling + unit testing this code
     pub fn from_req<TFut>(
         mut req: ConcreteRequest,
-        mut handler: impl for<'a> FnOnce(Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,
-    ) -> Result<Response<Vec<u8>>, crate::Error>
+        cookies: CookieJar,
+        handler: impl for<'a> FnOnce(Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,
+    ) -> EndpointResult
     where
         TFut: Future<Output = ()> + Send + 'static,
     {
         if req.method() != Method::GET {
-            return Ok(Response::builder()
-                .status(StatusCode::METHOD_NOT_ALLOWED)
-                .body(vec![])?);
+            return Ok((
+                Response::builder()
+                    .status(StatusCode::METHOD_NOT_ALLOWED)
+                    .body(vec![])?,
+                cookies,
+            ));
         }
 
         if !header_contains(&req, header::CONNECTION, "upgrade") {
-            return Ok(Response::builder()
-                .status(StatusCode::BAD_REQUEST)
-                .body(vec![])?);
+            return Ok((
+                Response::builder()
+                    .status(StatusCode::BAD_REQUEST)
+                    .body(vec![])?,
+                cookies,
+            ));
         }
 
         if !header_eq(&req, header::UPGRADE, "websocket") {
-            return Ok(Response::builder()
-                .status(StatusCode::BAD_REQUEST)
-                .body(vec![])?);
+            return Ok((
+                Response::builder()
+                    .status(StatusCode::BAD_REQUEST)
+                    .body(vec![])?,
+                cookies,
+            ));
         }
 
         if !header_eq(&req, header::SEC_WEBSOCKET_VERSION, "13") {
-            return Ok(Response::builder()
-                .status(StatusCode::BAD_REQUEST)
-                .body(vec![])?);
+            return Ok((
+                Response::builder()
+                    .status(StatusCode::BAD_REQUEST)
+                    .body(vec![])?,
+                cookies,
+            ));
         }
 
         let sec_websocket_key = match req.headers_mut().remove(header::SEC_WEBSOCKET_KEY) {
             Some(sec_websocket_key) => sec_websocket_key,
             None => {
-                return Ok(Response::builder()
-                    .status(StatusCode::BAD_REQUEST)
-                    .body(vec![])?)
+                return Ok((
+                    Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(vec![])?,
+                    cookies,
+                ))
             }
         };
 
         let on_upgrade = match req.extensions_mut().remove::<OnUpgrade>() {
             Some(on_upgrade) => on_upgrade,
             None => {
-                return Ok(Response::builder()
-                    .status(StatusCode::BAD_REQUEST)
-                    .body(vec![])?)
+                return Ok((
+                    Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(vec![])?,
+                    cookies,
+                ))
             }
         };
 
@@ -115,7 +135,7 @@ impl WebsocketUpgrade {
         //     builder = builder.header(header::SEC_WEBSOCKET_PROTOCOL, protocol);
         // }
 
-        Ok(builder.body([].to_vec())?)
+        Ok((builder.body([].to_vec())?, cookies))
     }
 }
 

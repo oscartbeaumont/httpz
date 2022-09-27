@@ -4,15 +4,14 @@ use httpz::{
     ConcreteRequest, EndpointResult, GenericEndpoint,
 };
 
-async fn handler<'a>(
-    _ctx: (),
-    _req: ConcreteRequest,
-    _cookies: &'a mut CookieJar,
-) -> EndpointResult {
-    Ok(Response::builder()
-        .status(StatusCode::OK)
-        .header("Content-Type", "text/html")
-        .body(b"Hello httpz World!".to_vec())?)
+async fn handler<'a>(_ctx: (), _req: ConcreteRequest, cookies: CookieJar) -> EndpointResult {
+    Ok((
+        Response::builder()
+            .status(StatusCode::OK)
+            .header("Content-Type", "text/html")
+            .body(b"Hello httpz World!".to_vec())?,
+        cookies,
+    ))
 }
 
 #[cfg(feature = "axum")]

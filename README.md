@@ -17,12 +17,15 @@ This project is a 🚧 work in progress 🚧. Currently it is designed around th
 async fn handler<'a>(
     _ctx: (),
     _req: ConcreteRequest,
-    _cookies: &'a mut CookieJar,
+    cookies: CookieJar,
 ) -> EndpointResult {
-    Ok(Response::builder()
-        .status(StatusCode::OK)
-        .header("Content-Type", "text/html")
-        .body(b"Hello httpz World!".to_vec())?)
+    Ok((
+        Response::builder()
+            .status(StatusCode::OK)
+            .header("Content-Type", "text/html")
+            .body(b"Hello httpz World!".to_vec())?,
+        cookies // You must pass the CookieJar back so the cookies are set of the response.
+    ))
 }
 
 // Define a httpz generic endpoint. handler MUST be a function, closures will not work.

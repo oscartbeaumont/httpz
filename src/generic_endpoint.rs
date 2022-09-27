@@ -13,17 +13,17 @@ where
     type Fut: Future<Output = EndpointResult> + Send + 'this;
 
     /// is called to handle the HTTP request.
-    fn call(&self, ctx: TCtx, req: ConcreteRequest, cookies: &'this mut CookieJar) -> Self::Fut;
+    fn call(&self, ctx: TCtx, req: ConcreteRequest, cookies: CookieJar) -> Self::Fut;
 }
 
 impl<'this, TCtx, TFut, TFunc> EndpointFn<'this, TCtx> for TFunc
 where
-    TFunc: Fn(TCtx, ConcreteRequest, &'this mut CookieJar) -> TFut + Send + Sync + 'static,
+    TFunc: Fn(TCtx, ConcreteRequest, CookieJar) -> TFut + Send + Sync + 'static,
     TFut: Future<Output = EndpointResult> + Send + 'this,
 {
     type Fut = TFut;
 
-    fn call(&self, ctx: TCtx, req: ConcreteRequest, cookies: &'this mut CookieJar) -> Self::Fut {
+    fn call(&self, ctx: TCtx, req: ConcreteRequest, cookies: CookieJar) -> Self::Fut {
         self(ctx, req, cookies)
     }
 }
@@ -80,7 +80,7 @@ where
     fn handler<'a, 'b: 'a>(
         &'a self,
         req: ConcreteRequest,
-        cookies: &'b mut CookieJar,
+        cookies: CookieJar,
     ) -> <Self::EndpointFn as EndpointFn<'_, TCtx>>::Fut {
         self.func.call(self.ctx.clone(), req, cookies)
     }

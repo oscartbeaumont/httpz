@@ -7,7 +7,7 @@ use crate::{EndpointFn, Error};
 pub type ConcreteRequest = Request<Vec<u8>>;
 
 /// is a type alias for the response type of an endpoint.
-pub type EndpointResult = Result<Response<Vec<u8>>, Error>;
+pub type EndpointResult = Result<(Response<Vec<u8>>, CookieJar), Error>;
 
 /// is a endpoint defined on the http router corresponding to a specific URL. An endpoint may handle any number of HTTP methods.
 /// Your library should create an HttpEndpoint and return it to the user so they can register it with the HTTP router of the web framework they are using.
@@ -27,7 +27,7 @@ pub trait HttpEndpoint: Sized + Sync + Send + 'static {
     fn handler<'a, 'b: 'a>(
         &'a self,
         req: ConcreteRequest,
-        cookies: &'b mut CookieJar,
+        cookies: CookieJar,
     ) -> <Self::EndpointFn as EndpointFn<'_, Self::Ctx>>::Fut;
 }
 

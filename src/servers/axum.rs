@@ -1,17 +1,16 @@
 use std::sync::Arc;
 
-use axum::{
-    body::Bytes,
-    routing::{on, MethodFilter, MethodRouter},
-};
+use axum::routing::{on, MethodFilter, MethodRouter};
 use cookie::{Cookie, CookieJar};
 use http::{
     header::{COOKIE, SET_COOKIE},
-    request::Parts,
     HeaderMap, Request, StatusCode,
 };
+use hyper::{body::to_bytes, Body};
 
 use crate::{Endpoint, HttpEndpoint};
+
+pub use axum;
 
 impl<TEndpoint> Endpoint<TEndpoint>
 where
@@ -28,10 +27,10 @@ where
             method_filter.insert(MethodFilter::try_from(method.clone()).unwrap());
         }
 
-        on(method_filter, |parts: Parts, body: Bytes| async move {
+        on(method_filter, |request: Request<Body>| async move {
             let mut cookies = CookieJar::new();
-            for cookie in parts
-                .headers
+            for cookie in request
+                .headers()
                 .get_all(COOKIE)
                 .into_iter()
                 .filter_map(|value| value.to_str().ok())
@@ -41,11 +40,16 @@ where
                 cookies.add_original(cookie);
             }
 
+            let (parts, body) = request.into_parts();
             match endpoint
-                .handler(Request::from_parts(parts, body.to_vec()), &mut cookies)
+                .handler(
+                    // TODO: Error handling on incoming body
+                    Request::from_parts(parts, to_bytes(body).await.unwrap().to_vec()),
+                    cookies,
+                )
                 .await
             {
-                Ok(resp) => {
+                Ok((resp, cookies)) => {
                     let (mut parts, body) = resp.into_parts();
                     for cookie in cookies.delta() {
                         if let Ok(header_value) = cookie.encoded().to_string().parse() {
