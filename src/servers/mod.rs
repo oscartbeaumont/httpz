@@ -18,6 +18,10 @@ pub mod rocket;
 #[cfg(feature = "warp")]
 pub mod warp;
 
-/// support for [AWS Lambda](https://github.com/awslabs/aws-lambda-rust-runtime)
+/// support for [AWS Lambda](https://github.com/awslabs/aws-lambda-rust-runtime) & [Netlify functions](https://docs.netlify.com/functions/overview)
 #[cfg(feature = "lambda")]
 pub mod lambda;
+
+/// support for [Cloudflare Workers](https://developers.cloudflare.com/workers/)
+#[cfg(feature = "workers")]
+pub mod workers;

@@ -1,3 +1,4 @@
+use actix_web::{web, App, HttpResponse, HttpServer};
 use httpz::{
     cookie::CookieJar,
     http::{Method, Response, StatusCode},
@@ -14,18 +15,20 @@ async fn handler<'a>(_ctx: (), _req: ConcreteRequest, cookies: CookieJar) -> End
     ))
 }
 
-#[cfg(feature = "axum")]
-#[tokio::main]
-async fn main() {
+#[cfg(feature = "actix-web")]
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
     let endpoint = GenericEndpoint::new((), [Method::GET, Method::POST], handler);
 
-    // Attach your endpoint to a HTTP server. This example uses Axum but it could be any other one.
-    let app = axum::Router::new().route("/", endpoint.axum());
+    let addr = "[::]:9001".parse::<std::net::SocketAddr>().unwrap(); // This listens on IPv6 and IPv4
+    println!("actix-web listening on http://{}", addr);
+    // HttpServer::new({
+    //     let endpoint = endpoint.actix();
+    //     move || App::new().route("/", endpoint.mount())
+    // })
+    // .bind(addr)?
+    // .run()
+    // .await
 
-    let addr = "[::]:9000".parse::<std::net::SocketAddr>().unwrap(); // This listens on IPv6 and IPv4
-    println!("Axum listening on http://{}", addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    todo!();
 }

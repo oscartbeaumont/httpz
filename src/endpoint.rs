@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use cookie::CookieJar;
 use http::{Method, Request, Response};
 
@@ -47,5 +49,10 @@ where
     /// create a new endpoint from a [HttpEndpoint](httpz::HttpEndpoint).
     pub fn from_endpoint(endpoint: TEndpoint) -> Self {
         Endpoint { endpoint }
+    }
+
+    /// Shortcut to arc the endpoint.
+    pub fn arced(self) -> Arc<Self> {
+        Arc::new(self)
     }
 }

@@ -89,7 +89,6 @@ where
 
                     let (parts, body) = request.into_parts();
                     let fut = endpoint.handler(
-                        // TODO: Error handling on incoming body
                         http::Request::from_parts(
                             parts,
                             match body {
