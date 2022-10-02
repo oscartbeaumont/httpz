@@ -1,0 +1,9 @@
+[base]
+publish = "./public"
+environment = { NETLIFY_EXPERIMENTAL_BUILD_RUST_SOURCE = "true" }
+
+[functions]
+directory = "./netlify/functions"
+
+[context.production]
+publish = "public/"

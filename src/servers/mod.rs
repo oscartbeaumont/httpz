@@ -17,3 +17,7 @@ pub mod rocket;
 /// support for [Warp](https://github.com/seanmonstar/warp)
 #[cfg(feature = "warp")]
 pub mod warp;
+
+/// support for [AWS Lambda](https://github.com/awslabs/aws-lambda-rust-runtime)
+#[cfg(feature = "lambda")]
+pub mod lambda;
