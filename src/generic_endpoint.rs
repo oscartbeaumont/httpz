@@ -1,72 +1,70 @@
-use cookie::CookieJar;
 use http::Method;
 use std::future::Future;
 
-use crate::{ConcreteRequest, Endpoint, EndpointResult, HttpEndpoint};
+use crate::{Endpoint, HttpEndpoint, HttpResponse, Request};
 
 /// represents an async function used to handle the HTTP request. I would highly recommend using [GenericHttpEndpoint] instead of implementing this trait yourself.
-pub trait EndpointFn<'this, TCtx>
+pub trait EndpointFn<'this>
 where
     Self: Send + Sync + 'this,
 {
+    /// TODO
+    type Response: HttpResponse;
+
     /// the type of the future returned by the handler function.
-    type Fut: Future<Output = EndpointResult> + Send + 'this;
+    type Fut: Future<Output = Self::Response> + Send + 'this;
 
     /// is called to handle the HTTP request.
-    fn call(&self, ctx: TCtx, req: ConcreteRequest, cookies: CookieJar) -> Self::Fut;
+    fn call(&self, req: Request) -> Self::Fut;
 }
 
-impl<'this, TCtx, TFut, TFunc> EndpointFn<'this, TCtx> for TFunc
+impl<'this, TFut, TFunc, TRes> EndpointFn<'this> for TFunc
 where
-    TFunc: Fn(TCtx, ConcreteRequest, CookieJar) -> TFut + Send + Sync + 'static,
-    TFut: Future<Output = EndpointResult> + Send + 'this,
+    TFunc: Fn(Request) -> TFut + Send + Sync + 'this,
+    TFut: Future<Output = TRes> + Send + 'this,
+    TRes: HttpResponse,
 {
+    type Response = TRes;
     type Fut = TFut;
 
-    fn call(&self, ctx: TCtx, req: ConcreteRequest, cookies: CookieJar) -> Self::Fut {
-        self(ctx, req, cookies)
+    fn call(&self, req: Request) -> Self::Fut {
+        self(req)
     }
 }
 
 /// is an easy way of constructing an endpoint from an async function you provide.
-pub struct GenericEndpoint<TCtx, TMethods, TEndpointFn>
+pub struct GenericEndpoint<TMethods, TEndpointFn>
 where
-    TCtx: Sync + Send + 'static,
     TMethods: AsRef<[Method]> + Send + Sync + 'static,
-    TEndpointFn: for<'this> EndpointFn<'this, TCtx>,
+    TEndpointFn: for<'this> EndpointFn<'this>,
 {
-    ctx: TCtx,
     methods: Option<TMethods>,
     func: TEndpointFn,
 }
-impl<TCtx, TMethods, TEndpointFn> GenericEndpoint<TCtx, TMethods, TEndpointFn>
+impl<TMethods, TEndpointFn> GenericEndpoint<TMethods, TEndpointFn>
 where
-    TCtx: Sync + Send + Clone + 'static,
     TMethods: AsRef<[Method]> + Send + Sync + 'static,
-    TEndpointFn: for<'this> EndpointFn<'this, TCtx>,
+    TEndpointFn: for<'this> EndpointFn<'this>,
 {
     /// create a new [Endpoint] from a context, a list of methods and a function to handle the request.
-    pub fn new(ctx: TCtx, methods: TMethods, func: TEndpointFn) -> Endpoint<Self> {
-        Endpoint::from_endpoint(Self::new_raw(ctx, methods, func))
+    pub fn new(methods: TMethods, func: TEndpointFn) -> Endpoint<Self> {
+        Endpoint::from_endpoint(Self::new_raw(methods, func))
     }
 
     /// create a new generic endpoint from a context, a list of methods and a function to handle the request.
-    pub fn new_raw(ctx: TCtx, methods: TMethods, func: TEndpointFn) -> Self {
+    pub fn new_raw(methods: TMethods, func: TEndpointFn) -> Self {
         Self {
-            ctx,
             methods: Some(methods),
             func,
         }
     }
 }
 
-impl<TCtx, TMethods, TEndpointFn> HttpEndpoint for GenericEndpoint<TCtx, TMethods, TEndpointFn>
+impl<TMethods, TEndpointFn> HttpEndpoint for GenericEndpoint<TMethods, TEndpointFn>
 where
-    TCtx: Sync + Send + Clone + 'static,
     TMethods: AsRef<[Method]> + Send + Sync + 'static,
-    TEndpointFn: for<'this> EndpointFn<'this, TCtx>,
+    TEndpointFn: for<'this> EndpointFn<'this>,
 {
-    type Ctx = TCtx;
     type Routes = TMethods;
     type EndpointFn = TEndpointFn;
 
@@ -77,11 +75,7 @@ where
         }
     }
 
-    fn handler<'a, 'b: 'a>(
-        &'a self,
-        req: ConcreteRequest,
-        cookies: CookieJar,
-    ) -> <Self::EndpointFn as EndpointFn<'_, TCtx>>::Fut {
-        self.func.call(self.ctx.clone(), req, cookies)
+    fn handler(&self, req: Request) -> <Self::EndpointFn as EndpointFn<'_>>::Fut {
+        self.func.call(req)
     }
 }

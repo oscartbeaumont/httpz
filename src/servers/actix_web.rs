@@ -3,15 +3,11 @@ use std::{mem, sync::Arc};
 use actix_web::{
     guard::{self, AnyGuard},
     web::{self, Bytes},
-    HttpRequest, HttpResponse, Route,
+    HttpRequest, HttpResponse as ActixHttpResponse, Route,
 };
-use cookie::{Cookie, CookieJar};
-use http::{
-    header::{HeaderName, COOKIE, SET_COOKIE},
-    Method, Request, StatusCode,
-};
+use http::{header::HeaderName, Method, Request, StatusCode};
 
-use crate::{Endpoint, HttpEndpoint};
+use crate::{Endpoint, HttpEndpoint, HttpResponse};
 
 /// TODO
 pub struct ActixMounter<TEndpoint>(Arc<TEndpoint>, Option<AnyGuard>)
@@ -54,28 +50,10 @@ where
                     }
                     // *req.extensions_mut() = request.extensions().get_mut() // TODO: Pass extensions through
 
-                    let mut cookies = CookieJar::new();
-                    for cookie in req
-                        .headers()
-                        .get_all(COOKIE)
-                        .into_iter()
-                        .filter_map(|value| value.to_str().ok())
-                        .flat_map(|value| value.split(';'))
-                        .filter_map(|cookie| Cookie::parse_encoded(cookie.to_owned()).ok())
-                    {
-                        cookies.add_original(cookie);
-                    }
-
-                    match endpoint.handler(req, cookies).await {
-                        Ok((resp, cookies)) => {
-                            let (mut parts, body) = resp.into_parts();
-                            for cookie in cookies.delta() {
-                                if let Ok(header_value) = cookie.encoded().to_string().parse() {
-                                    parts.headers.append(SET_COOKIE, header_value);
-                                }
-                            }
-
-                            let mut resp = HttpResponse::new(parts.status);
+                    match endpoint.handler(crate::Request(req)).await.into_response() {
+                        Ok(resp) => {
+                            let (parts, body) = resp.into_parts();
+                            let mut resp = ActixHttpResponse::new(parts.status);
                             for (k, v) in parts.headers {
                                 if let Some(k) = k {
                                     resp.headers_mut().insert(HeaderName::from(k), v);
@@ -83,7 +61,7 @@ where
                             }
                             resp.set_body(body)
                         }
-                        Err(err) => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
+                        Err(err) => ActixHttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
                             .set_body(err.to_string().as_bytes().to_vec()),
                     }
                 }
@@ -97,7 +75,7 @@ where
 {
     /// is called to create a builder for mounting this endpoint to your actix-web router.
     pub fn actix(mut self) -> ActixMounter<TEndpoint> {
-        #[warn(unused_assignments)]
+        #[allow(unused_assignments)]
         let mut method_filter = None;
         let methods = self.endpoint.register();
         let mut methods = methods.as_ref().iter();

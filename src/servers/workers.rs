@@ -1,14 +1,9 @@
 use std::str::FromStr;
 
-use cookie::{Cookie, CookieJar};
-use http::{
-    header::{HeaderName, COOKIE, SET_COOKIE},
-    uri::InvalidUri,
-    HeaderValue, Request, StatusCode,
-};
+use http::{header::HeaderName, uri::InvalidUri, HeaderValue, Request, StatusCode};
 use worker::ResponseBody;
 
-use crate::{Endpoint, HttpEndpoint};
+use crate::{Endpoint, HttpEndpoint, HttpResponse};
 
 impl<TEndpoint> Endpoint<TEndpoint>
 where
@@ -46,27 +41,14 @@ where
         }
         // *req.extensions_mut() = request.extensions().get_mut() // TODO: Pass extensions through
 
-        let mut cookies = CookieJar::new();
-        for cookie in req
-            .headers()
-            .get_all(COOKIE)
-            .into_iter()
-            .filter_map(|value| value.to_str().ok())
-            .flat_map(|value| value.split(';'))
-            .filter_map(|cookie| Cookie::parse_encoded(cookie.to_owned()).ok())
+        match self
+            .endpoint
+            .handler(crate::Request(req))
+            .await
+            .into_response()
         {
-            cookies.add_original(cookie);
-        }
-
-        match self.endpoint.handler(req, cookies).await {
-            Ok((resp, cookies)) => {
-                let (mut parts, body) = resp.into_parts();
-                for cookie in cookies.delta() {
-                    if let Ok(header_value) = cookie.encoded().to_string().parse() {
-                        parts.headers.append(SET_COOKIE, header_value);
-                    }
-                }
-
+            Ok(resp) => {
+                let (parts, body) = resp.into_parts();
                 worker::Response::from_body(ResponseBody::Body(body)).map(|r| {
                     r.with_status(parts.status.as_u16())
                         .with_headers(parts.headers.into())

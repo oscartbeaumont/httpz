@@ -1,14 +1,10 @@
 use std::sync::Arc;
 
 use axum::routing::{on, MethodFilter, MethodRouter};
-use cookie::{Cookie, CookieJar};
-use http::{
-    header::{COOKIE, SET_COOKIE},
-    HeaderMap, Request, StatusCode,
-};
+use http::{HeaderMap, Request, StatusCode};
 use hyper::{body::to_bytes, Body};
 
-use crate::{Endpoint, HttpEndpoint};
+use crate::{Endpoint, HttpEndpoint, HttpResponse};
 
 pub use axum;
 
@@ -28,34 +24,28 @@ where
         }
 
         on(method_filter, |request: Request<Body>| async move {
-            let mut cookies = CookieJar::new();
-            for cookie in request
-                .headers()
-                .get_all(COOKIE)
-                .into_iter()
-                .filter_map(|value| value.to_str().ok())
-                .flat_map(|value| value.split(';'))
-                .filter_map(|cookie| Cookie::parse_encoded(cookie.to_owned()).ok())
-            {
-                cookies.add_original(cookie);
-            }
-
             let (parts, body) = request.into_parts();
+
+            let body = match to_bytes(body).await {
+                Ok(body) => body.to_vec(),
+                Err(err) => {
+                    return (
+                        StatusCode::BAD_REQUEST,
+                        HeaderMap::new(),
+                        err.to_string().as_bytes().to_vec(),
+                    );
+                }
+            };
+
+            let body = Request::from_parts(parts, body);
+
             match endpoint
-                .handler(
-                    // TODO: Error handling on incoming body
-                    Request::from_parts(parts, to_bytes(body).await.unwrap().to_vec()),
-                    cookies,
-                )
+                .handler(crate::Request::new(body))
                 .await
+                .into_response()
             {
-                Ok((resp, cookies)) => {
-                    let (mut parts, body) = resp.into_parts();
-                    for cookie in cookies.delta() {
-                        if let Ok(header_value) = cookie.encoded().to_string().parse() {
-                            parts.headers.append(SET_COOKIE, header_value);
-                        }
-                    }
+                Ok(resp) => {
+                    let (parts, body) = resp.into_parts();
                     (parts.status, parts.headers, body)
                 }
                 Err(err) => (

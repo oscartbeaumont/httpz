@@ -1,8 +1,4 @@
-use cookie::{Cookie, CookieJar};
-use http::{
-    header::{COOKIE, SET_COOKIE},
-    StatusCode,
-};
+use http::StatusCode;
 use lambda_http::{Body, Request, Response, Service};
 use std::{
     future::Future,
@@ -10,7 +6,7 @@ use std::{
     task::{Context, Poll},
 };
 
-use crate::{Endpoint, HttpEndpoint};
+use crate::{Endpoint, HttpEndpoint, HttpResponse};
 
 /// TODO
 pub trait InternalTowerHandlerFunc<TEndpoint>: Fn(Arc<TEndpoint>, Request) -> Self::Fut
@@ -75,39 +71,19 @@ where
                             .body("Method Not Allowed".into());
                     }
 
-                    let mut cookies = CookieJar::new();
-                    for cookie in request
-                        .headers()
-                        .get_all(COOKIE)
-                        .into_iter()
-                        .filter_map(|value| value.to_str().ok())
-                        .flat_map(|value| value.split(';'))
-                        .filter_map(|cookie| Cookie::parse_encoded(cookie.to_owned()).ok())
-                    {
-                        cookies.add_original(cookie);
-                    }
-
                     let (parts, body) = request.into_parts();
-                    let fut = endpoint.handler(
-                        http::Request::from_parts(
-                            parts,
-                            match body {
-                                Body::Empty => vec![],
-                                Body::Text(text) => text.into_bytes(),
-                                Body::Binary(binary) => binary,
-                            },
-                        ),
-                        cookies,
-                    );
+                    let fut = endpoint.handler(crate::Request(http::Request::from_parts(
+                        parts,
+                        match body {
+                            Body::Empty => vec![],
+                            Body::Text(text) => text.into_bytes(),
+                            Body::Binary(binary) => binary,
+                        },
+                    )));
 
-                    match fut.await {
-                        Ok((resp, cookies)) => {
-                            let (mut parts, body) = resp.into_parts();
-                            for cookie in cookies.delta() {
-                                if let Ok(header_value) = cookie.encoded().to_string().parse() {
-                                    parts.headers.append(SET_COOKIE, header_value);
-                                }
-                            }
+                    match fut.await.into_response() {
+                        Ok(resp) => {
+                            let (parts, body) = resp.into_parts();
                             Ok(Response::from_parts(parts, body.into()))
                         }
                         Err(err) => Response::builder()

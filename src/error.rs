@@ -1,21 +1,16 @@
-use std::fmt::{Display, Formatter};
+use thiserror::Error;
 
 /// a generic error type to represent all possible errors from httpz
+#[derive(Error, Debug)]
 pub enum Error {
     /// an error that occurred in the HTTP library
-    HTTPError(http::Error),
-}
-
-impl Display for Error {
-    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-        match self {
-            Error::HTTPError(err) => write!(f, "HTTP error: {}", err),
-        }
-    }
-}
-
-impl From<http::Error> for Error {
-    fn from(err: http::Error) -> Error {
-        Error::HTTPError(err)
-    }
+    #[error("http error: {0}")]
+    HTTPError(#[from] http::Error),
+    /// UTF coding error.
+    #[error("UTF-8 encoding error")]
+    Utf8,
+    /// TODO
+    #[error("UTF-8 encoding error")]
+    #[cfg(feature = "tokio-ws")]
+    TungsteniteError(#[from] async_tungstenite::tungstenite::Error),
 }
