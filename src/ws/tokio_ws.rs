@@ -81,6 +81,8 @@ where
 {
     fn into_response(mut self) -> Result<Response<Vec<u8>>, Error> {
         let mut resp = Response::builder();
+
+        #[cfg(feature = "cookies")]
         if let Some(jar) = self.cookies {
             if let Some(headers) = resp.headers_mut() {
                 for cookie in jar.delta() {

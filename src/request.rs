@@ -37,7 +37,7 @@ impl Request {
 
     /// Get a new [CookieJar] which is derived from the cookies in the request.
     #[cfg(feature = "cookies")]
-    pub fn cookies(&mut self) -> cookie::CookieJar {
+    pub fn cookies(&self) -> cookie::CookieJar {
         use {
             cookie::{Cookie, CookieJar},
             http::header::COOKIE,
@@ -69,6 +69,12 @@ impl Request {
 
     // TODO: Downcasting extensions both `mut` and `ref`
     // TODO: Inserting extensions
+}
+
+impl From<Request> for http::Request<Vec<u8>> {
+    fn from(req: Request) -> Self {
+        req.0
+    }
 }
 
 impl Deref for Request {
