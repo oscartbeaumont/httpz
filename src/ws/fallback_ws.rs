@@ -28,7 +28,7 @@ impl WebsocketUpgrade {
             for<'a> FnOnce(Request, Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,
         TFut: Future<Output = ()> + Send + 'static,
     {
-        WebSocketUpgradeResponse(PhantomData::new())
+        WebSocketUpgradeResponse(PhantomData)
     }
 }
 
