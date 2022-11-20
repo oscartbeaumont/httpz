@@ -14,19 +14,16 @@ This project is a 🚧 work in progress 🚧. Currently it is designed around th
 
 ```rust
 // Define your a single HTTP handler which is supported by all major Rust webservers.
-async fn handler<'a>(
-    _ctx: (),
-    _req: ConcreteRequest,
-    cookies: CookieJar,
-) -> EndpointResult {
+async fn handler(_ctx: (), _req: ConcreteRequest, cookies: CookieJar) -> EndpointResult {
     Ok((
         Response::builder()
             .status(StatusCode::OK)
             .header("Content-Type", "text/html")
             .body(b"Hello httpz World!".to_vec())?,
-        cookies // You must pass the CookieJar back so the cookies are set of the response.
+        cookies, // You must pass the CookieJar back so the cookies are set of the response.
     ))
 }
+
 
 // Define a httpz generic endpoint. handler MUST be a function, closures will not work.
 let endpoint = GenericEndpoint::new((), [Method::GET, Method::POST], handler); 
