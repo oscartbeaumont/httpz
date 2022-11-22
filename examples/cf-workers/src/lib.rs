@@ -1,21 +1,10 @@
 use httpz::{
-    cookie::CookieJar,
     http::{Method, Response, StatusCode},
-    ConcreteRequest, EndpointResult, GenericEndpoint,
+    GenericEndpoint, Request,
 };
 use worker::{console_log, event, Date};
 
 mod utils;
-
-async fn handler<'a>(_ctx: (), _req: ConcreteRequest, cookies: CookieJar) -> EndpointResult {
-    Ok((
-        Response::builder()
-            .status(StatusCode::OK)
-            .header("Content-Type", "text/html")
-            .body(b"Hello httpz World!".to_vec())?,
-        cookies,
-    ))
-}
 
 #[event(fetch, respond_with_errors)]
 pub async fn main(
@@ -33,7 +22,18 @@ pub async fn main(
 
     utils::set_panic_hook();
 
-    let endpoint = GenericEndpoint::new((), [Method::GET, Method::POST], handler);
+    let endpoint = GenericEndpoint::new(
+        "/*any", // TODO: Make this wildcard work
+        [Method::GET, Method::POST],
+        |_req: Request| async move {
+            Ok(Response::builder()
+                .status(StatusCode::OK)
+                .header("Content-Type", "text/html")
+                .body(b"httpz running on Cloudflare Workers!".to_vec())?)
+        },
+    );
 
+    // TODO: Compatibility with the built in HTTP router
+    // TODO: URL Prefix
     endpoint.workers(req).await
 }

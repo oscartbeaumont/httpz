@@ -57,7 +57,7 @@ where
 {
     /// is called to mount the endpoint onto the AWS lambda runtime.
     pub fn lambda(mut self) -> TowerEndpoint<TEndpoint, impl InternalTowerHandlerFunc<TEndpoint>> {
-        let methods = self.endpoint.register();
+        let (url, methods) = self.endpoint.register();
 
         TowerEndpoint(
             Arc::new(self.endpoint),

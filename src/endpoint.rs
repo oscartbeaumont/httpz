@@ -10,11 +10,13 @@ use crate::{EndpointFn, Request};
 pub trait HttpEndpoint: Sized + Sync + Send + 'static {
     /// the type of your routes array. This allows the user to return either [Vec<http::Method>], [&[http::Method]] or [[http::Method; N]].
     type Routes: AsRef<[Method]>;
+    /// the type of the URL string
+    type Url: AsRef<str>;
     /// the type of the function to handle the endpoint.
     type EndpointFn: for<'a> EndpointFn<'a>;
 
     /// is called once and tells the router what HTTP methods this endpoint will handle.
-    fn register(&mut self) -> Self::Routes;
+    fn register(&mut self) -> (Self::Url, Self::Routes);
 
     /// is called for every request and returns a future that will return the HttpResponse.
     fn handler(&self, req: Request) -> <Self::EndpointFn as EndpointFn<'_>>::Fut;

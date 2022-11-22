@@ -13,23 +13,31 @@ This project is a 🚧 work in progress 🚧. Currently it is designed around th
 ## Usage
 
 ```rust
-// Define your a single HTTP handler which is supported by all major Rust webservers.
-async fn handler(_ctx: (), _req: ConcreteRequest, cookies: CookieJar) -> EndpointResult {
-    Ok((
-        Response::builder()
+    // Define your a single HTTP handler which is supported by all major Rust webservers.
+let endpoint = GenericEndpoint::new(
+    // Set URL prefix
+    "/",
+    // Set the supported HTTP methods
+    [Method::GET, Method::POST],
+    // Define the handler function
+    |_req: Request| async move {
+        Ok(Response::builder()
             .status(StatusCode::OK)
             .header("Content-Type", "text/html")
-            .body(b"Hello httpz World!".to_vec())?,
-        cookies, // You must pass the CookieJar back so the cookies are set of the response.
-    ))
-}
+            .body(b"Hello httpz World!".to_vec())?)
+    },
+);
 
-
-// Define a httpz generic endpoint. handler MUST be a function, closures will not work.
-let endpoint = GenericEndpoint::new((), [Method::GET, Method::POST], handler); 
-
-// Attach your generic endpoint to any HTTP webserver you like (Axum shown here).
+// Attach your generic endpoint to Axum
 let app = axum::Router::new().route("/", endpoint.axum());
+
+// Attach your generic endpoint to Actix Web
+HttpServer::new({
+    let endpoint = endpoint.actix();
+    move || App::new().service(web::scope("/prefix").service(endpoint.mount()))
+});
+
+// and so on...
 ```
 
 Check out the rest of the [examples](/examples)!

@@ -33,46 +33,74 @@ where
 }
 
 /// is an easy way of constructing an endpoint from an async function you provide.
-pub struct GenericEndpoint<TMethods, TEndpointFn>
+pub struct GenericEndpoint<TMethods, TEndpointFn, TUrl>
 where
     TMethods: AsRef<[Method]> + Send + Sync + 'static,
     TEndpointFn: for<'this> EndpointFn<'this>,
+    TUrl: AsRef<str> + Send + Sync + 'static,
 {
     methods: Option<TMethods>,
     func: TEndpointFn,
+    url: Option<TUrl>,
 }
-impl<TMethods, TEndpointFn> GenericEndpoint<TMethods, TEndpointFn>
+
+impl<TMethods, TEndpointFn, TUrl> Clone for GenericEndpoint<TMethods, TEndpointFn, TUrl>
+where
+    TMethods: AsRef<[Method]> + Clone + Send + Sync + 'static,
+    TEndpointFn: for<'this> EndpointFn<'this> + Clone,
+    TUrl: AsRef<str> + Clone + Send + Sync + 'static,
+{
+    fn clone(&self) -> Self {
+        Self {
+            methods: self.methods.clone(),
+            func: self.func.clone(),
+            url: self.url.clone(),
+        }
+    }
+}
+
+impl<TMethods, TEndpointFn, TUrl> GenericEndpoint<TMethods, TEndpointFn, TUrl>
 where
     TMethods: AsRef<[Method]> + Send + Sync + 'static,
     TEndpointFn: for<'this> EndpointFn<'this>,
+    TUrl: AsRef<str> + Send + Sync + 'static,
 {
     /// create a new [Endpoint] from a context, a list of methods and a function to handle the request.
-    pub fn new(methods: TMethods, func: TEndpointFn) -> Endpoint<Self> {
-        Endpoint::from_endpoint(Self::new_raw(methods, func))
+    pub fn new(url: TUrl, methods: TMethods, func: TEndpointFn) -> Endpoint<Self> {
+        Endpoint::from_endpoint(Self::new_raw(url, methods, func))
     }
 
     /// create a new generic endpoint from a context, a list of methods and a function to handle the request.
-    pub fn new_raw(methods: TMethods, func: TEndpointFn) -> Self {
+    pub fn new_raw(url: TUrl, methods: TMethods, func: TEndpointFn) -> Self {
         Self {
             methods: Some(methods),
             func,
+            url: Some(url),
         }
     }
 }
 
-impl<TMethods, TEndpointFn> HttpEndpoint for GenericEndpoint<TMethods, TEndpointFn>
+impl<TMethods, TEndpointFn, TUrl> HttpEndpoint for GenericEndpoint<TMethods, TEndpointFn, TUrl>
 where
     TMethods: AsRef<[Method]> + Send + Sync + 'static,
     TEndpointFn: for<'this> EndpointFn<'this>,
+    TUrl: AsRef<str> + Send + Sync + 'static,
 {
     type Routes = TMethods;
+    type Url = TUrl;
     type EndpointFn = TEndpointFn;
 
-    fn register(&mut self) -> Self::Routes {
-        match self.methods.take() {
-            Some(methods) => methods,
-            None => unreachable!(),
-        }
+    fn register(&mut self) -> (Self::Url, Self::Routes) {
+        (
+            match self.url.take() {
+                Some(url) => url,
+                None => unreachable!(),
+            },
+            match self.methods.take() {
+                Some(methods) => methods,
+                None => unreachable!(),
+            },
+        )
     }
 
     fn handler(&self, req: Request) -> <Self::EndpointFn as EndpointFn<'_>>::Fut {

@@ -8,8 +8,10 @@ use httpz::{
 async fn main() {
     use cookie::Cookie;
 
-    let endpoint =
-        GenericEndpoint::new([Method::GET, Method::POST], |mut req: Request| async move {
+    let endpoint = GenericEndpoint::new(
+        "/",
+        [Method::GET, Method::POST],
+        |req: Request| async move {
             // DO THIS
             let mut cookies = req.cookies(); // This creates a new CookieJar from the request.
             cookies.add(Cookie::new("foo", "bar"));
@@ -25,10 +27,11 @@ async fn main() {
                     .body(b"Hello httpz World!".to_vec())?,
                 cookies, // If you don't return the CookieJar the cookies won't be set.
             ))
-        });
+        },
+    );
 
     // Attach your endpoint to a HTTP server. This example uses Axum but it could be any other one.
-    let app = axum::Router::new().route("/", endpoint.axum());
+    let app = axum::Router::new().nest("/", endpoint.axum());
 
     let addr = "[::]:9000".parse::<std::net::SocketAddr>().unwrap(); // This listens on IPv6 and IPv4
     println!("Axum listening on http://{}", addr);

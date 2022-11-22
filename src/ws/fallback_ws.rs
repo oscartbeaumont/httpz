@@ -2,12 +2,14 @@ use crate::{ws::Websocket, Error, HttpResponse, Request};
 use http::Response;
 use std::{future::Future, marker::PhantomData};
 
+/// TODO
 pub enum WebsocketUpgrade {}
 
 impl WebsocketUpgrade {
+    /// TODO
     pub fn from_req<THandler, TFut>(
-        req: Request,
-        handler: THandler,
+        _req: Request,
+        _handler: THandler,
     ) -> WebSocketUpgradeResponse<THandler, TFut>
     where
         THandler:
@@ -32,6 +34,7 @@ impl WebsocketUpgrade {
     }
 }
 
+/// TODO
 pub struct WebSocketUpgradeResponse<THandler, TFut>(PhantomData<(THandler, TFut)>)
 where
     THandler: for<'a> FnOnce(Request, Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,

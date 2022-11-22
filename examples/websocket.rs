@@ -8,27 +8,35 @@ async fn main() {
         GenericEndpoint, Request,
     };
 
-    let endpoint = GenericEndpoint::new([Method::GET, Method::POST], |req: Request| async move {
-        WebsocketUpgrade::from_req(req, |_req, mut socket| async move {
-            socket
-                .send(Message::Text("Hello World".to_string()))
-                .await
-                .unwrap();
-        })
-    });
+    let endpoint = GenericEndpoint::new(
+        "/",
+        [Method::GET, Method::POST],
+        |req: Request| async move {
+            WebsocketUpgrade::from_req(req, |_req, mut socket| async move {
+                socket
+                    .send(Message::Text("Hello World".to_string()))
+                    .await
+                    .unwrap();
+            })
+        },
+    );
 
     #[cfg(feature = "cookies")]
-    let endpoint2 = GenericEndpoint::new([Method::GET, Method::POST], |req: Request| async move {
-        WebsocketUpgrade::from_req(req, |_req, mut socket| async move {
-            socket
-                .send(Message::Text("Hello World".to_string()))
-                .await
-                .unwrap();
-        })
-    });
+    let endpoint2 = GenericEndpoint::new(
+        "/",
+        [Method::GET, Method::POST],
+        |req: Request| async move {
+            WebsocketUpgrade::from_req(req, |_req, mut socket| async move {
+                socket
+                    .send(Message::Text("Hello World".to_string()))
+                    .await
+                    .unwrap();
+            })
+        },
+    );
 
     // Attach your endpoint to a HTTP server. This example uses Axum but it could be any other one.
-    let app = axum::Router::new().route("/", endpoint.axum());
+    let app = axum::Router::new().nest("/", endpoint.axum());
     #[cfg(feature = "cookies")]
     let app = app.route("/cookiesws", endpoint2.axum());
 
