@@ -1,6 +1,6 @@
 use std::ops::{Deref, DerefMut};
 
-use http::{HeaderMap, Method, Version};
+use http::{request::Parts, HeaderMap, Method, Version};
 
 /// TODO
 pub struct Request(pub(crate) http::Request<Vec<u8>>);
@@ -65,6 +65,11 @@ impl Request {
             .uri()
             .query()
             .map(|query| form_urlencoded::parse(query.as_bytes()))
+    }
+
+    /// TODO
+    pub fn into_parts(self) -> (Parts, Vec<u8>) {
+        self.0.into_parts()
     }
 
     // TODO: Downcasting extensions both `mut` and `ref`
