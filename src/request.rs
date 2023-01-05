@@ -1,5 +1,3 @@
-use std::ops::{Deref, DerefMut};
-
 use http::{request::Parts, HeaderMap, Method, Version};
 
 /// TODO
@@ -72,26 +70,11 @@ impl Request {
         self.0.into_parts()
     }
 
+    /// TODO
+    pub fn expose(self) -> http::Request<Vec<u8>> {
+        self.0
+    }
+
     // TODO: Downcasting extensions both `mut` and `ref`
     // TODO: Inserting extensions
-}
-
-impl From<Request> for http::Request<Vec<u8>> {
-    fn from(req: Request) -> Self {
-        req.0
-    }
-}
-
-impl Deref for Request {
-    type Target = http::Request<Vec<u8>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for Request {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
 }
