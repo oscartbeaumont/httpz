@@ -41,6 +41,7 @@ rocket = ["dep:rocket"]
 warp = ["dep:warp"]
 lambda = ["dep:lambda_http", "dep:tower"]
 workers = ["dep:worker"]
+tauri = []
 
 [dependencies]
 # Webservers

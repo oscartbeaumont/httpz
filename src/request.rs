@@ -1,11 +1,31 @@
-use http::{request::Parts, HeaderMap, Method, Version};
+use http::{request::Parts, HeaderMap, Method, Uri, Version};
 
-/// TODO
-pub struct Request(pub(crate) http::Request<Vec<u8>>);
+use crate::Server;
+
+/// Represent a HTTP request
+#[derive(Debug)]
+pub struct Request(pub(crate) http::Request<Vec<u8>>, pub(crate) Server);
+
+impl Clone for Request {
+    fn clone(&self) -> Self {
+        Self(
+            http::Request::from_parts(
+                http::Request::<Vec<u8>>::default().into_parts().0,
+                self.body().clone(),
+            ),
+            self.1,
+        )
+    }
+}
 
 impl Request {
-    pub(crate) fn new(req: http::Request<Vec<u8>>) -> Self {
-        Self(req)
+    pub(crate) fn new(req: http::Request<Vec<u8>>, server: Server) -> Self {
+        Self(req, server)
+    }
+
+    /// Get the uri of the request.
+    pub fn uri(&self) -> &Uri {
+        self.0.uri()
     }
 
     /// Get the version of the request.
@@ -16,11 +36,6 @@ impl Request {
     /// Get the method of the request.
     pub fn method(&self) -> &Method {
         self.0.method()
-    }
-
-    /// Get the path of the request.
-    pub fn path(&self) -> &str {
-        self.0.uri().path()
     }
 
     /// Get the headers of the request.
@@ -65,14 +80,19 @@ impl Request {
             .map(|query| form_urlencoded::parse(query.as_bytes()))
     }
 
-    /// TODO
+    /// split the [http::Parts]] and the body
     pub fn into_parts(self) -> (Parts, Vec<u8>) {
         self.0.into_parts()
     }
 
-    /// TODO
+    /// expose the inner [http::Request]
     pub fn expose(self) -> http::Request<Vec<u8>> {
         self.0
+    }
+
+    /// get the type of the server that handled this request
+    pub fn server(&self) -> Server {
+        self.1
     }
 
     // TODO: Downcasting extensions both `mut` and `ref`

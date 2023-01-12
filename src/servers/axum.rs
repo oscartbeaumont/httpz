@@ -8,7 +8,7 @@ use axum::{
 use http::{HeaderMap, Request, StatusCode};
 use hyper::{body::to_bytes, Body};
 
-use crate::{Endpoint, HttpEndpoint, HttpResponse};
+use crate::{Endpoint, HttpEndpoint, HttpResponse, Server};
 
 pub use axum;
 
@@ -53,7 +53,7 @@ where
                     let body = Request::from_parts(parts, body);
 
                     match endpoint
-                        .handler(crate::Request::new(body))
+                        .handler(crate::Request::new(body, Server::Axum))
                         .await
                         .into_response()
                     {

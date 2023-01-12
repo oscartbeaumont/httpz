@@ -6,7 +6,7 @@ use std::{
     task::{Context, Poll},
 };
 
-use crate::{Endpoint, HttpEndpoint, HttpResponse};
+use crate::{Endpoint, HttpEndpoint, HttpResponse, Server};
 
 /// TODO
 pub trait InternalTowerHandlerFunc<TEndpoint>: Fn(Arc<TEndpoint>, Request) -> Self::Fut
@@ -72,14 +72,17 @@ where
                     }
 
                     let (parts, body) = request.into_parts();
-                    let fut = endpoint.handler(crate::Request(http::Request::from_parts(
-                        parts,
-                        match body {
-                            Body::Empty => vec![],
-                            Body::Text(text) => text.into_bytes(),
-                            Body::Binary(binary) => binary,
-                        },
-                    )));
+                    let fut = endpoint.handler(crate::Request(
+                        http::Request::from_parts(
+                            parts,
+                            match body {
+                                Body::Empty => vec![],
+                                Body::Text(text) => text.into_bytes(),
+                                Body::Binary(binary) => binary,
+                            },
+                        ),
+                        Server::Lambda,
+                    ));
 
                     match fut.await.into_response() {
                         Ok(resp) => {

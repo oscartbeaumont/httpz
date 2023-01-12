@@ -25,3 +25,11 @@ pub mod lambda;
 /// support for [Cloudflare Workers](https://developers.cloudflare.com/workers/)
 #[cfg(feature = "workers")]
 pub mod workers;
+
+/// support for [Cloudflare Workers](https://tauri.app)
+#[cfg(feature = "tauri")]
+pub mod tauri;
+
+/// support for [Hyper](https://github.com/hyperium/hyper)
+#[cfg(feature = "hyper")]
+pub mod hyper;

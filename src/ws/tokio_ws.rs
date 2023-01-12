@@ -109,13 +109,13 @@ where
             return Ok(resp.status(StatusCode::BAD_REQUEST).body(vec![])?);
         }
 
-        let sec_websocket_key = match self.req.headers_mut().remove(header::SEC_WEBSOCKET_KEY) {
+        let sec_websocket_key = match self.req.0.headers_mut().remove(header::SEC_WEBSOCKET_KEY) {
             Some(sec_websocket_key) => sec_websocket_key,
             None => return Ok(resp.status(StatusCode::BAD_REQUEST).body(vec![])?),
         };
 
         // TODO: This is an Axum thing. Support for other services will be needed.
-        let on_upgrade = match self.req.extensions_mut().remove::<OnUpgrade>() {
+        let on_upgrade = match self.req.0.extensions_mut().remove::<OnUpgrade>() {
             Some(on_upgrade) => on_upgrade,
             None => return Ok(resp.status(StatusCode::BAD_REQUEST).body(vec![])?),
         };

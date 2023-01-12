@@ -5,7 +5,7 @@ use actix_web::{
 };
 use http::{header::HeaderName, Method, Request, StatusCode};
 
-use crate::{Endpoint, HttpEndpoint, HttpResponse};
+use crate::{Endpoint, HttpEndpoint, HttpResponse, Server};
 
 /// TODO
 pub struct ActixMounter<TEndpoint: HttpEndpoint>(TEndpoint)
@@ -96,7 +96,11 @@ where
                     }
                     // *req.extensions_mut() = request.extensions().get_mut() // TODO: Pass extensions through
 
-                    match endpoint.handler(crate::Request(req)).await.into_response() {
+                    match endpoint
+                        .handler(crate::Request(req, Server::ActixWeb))
+                        .await
+                        .into_response()
+                    {
                         Ok(resp) => {
                             let (parts, body) = resp.into_parts();
                             let mut resp = ActixHttpResponse::new(parts.status);

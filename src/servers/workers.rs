@@ -3,7 +3,7 @@ use std::str::FromStr;
 use http::{header::HeaderName, uri::InvalidUri, HeaderValue, Request, StatusCode};
 use worker::ResponseBody;
 
-use crate::{Endpoint, HttpEndpoint, HttpResponse};
+use crate::{Endpoint, HttpEndpoint, HttpResponse, Server};
 
 impl<TEndpoint> Endpoint<TEndpoint>
 where
@@ -43,7 +43,7 @@ where
 
         match self
             .endpoint
-            .handler(crate::Request(req))
+            .handler(crate::Request(req, Server::CloudflareWorkers))
             .await
             .into_response()
         {
