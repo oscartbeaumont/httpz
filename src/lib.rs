@@ -1,5 +1,5 @@
 //! Code once, support every Rust webserver!
-// #![forbid(unsafe_code)] // TODO: Reenable this
+#![forbid(unsafe_code)]
 #![warn(missing_docs, clippy::unwrap_used)]
 
 mod endpoint;

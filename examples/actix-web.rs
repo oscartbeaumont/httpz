@@ -11,7 +11,7 @@ async fn main() -> std::io::Result<()> {
         "/{any:.*}", // TODO: This is inconsistent across webservers
         [Method::GET, Method::POST],
         |req: Request| async move {
-            println!("{:?}", req.path()); // TODO: Strip the `/prefix` bit for consistency with other webservers
+            println!("{:?}", req.uri().path()); // TODO: Strip the `/prefix` bit for consistency with other webservers
             Ok(Response::builder()
                 .status(StatusCode::OK)
                 .header("Content-Type", "text/html")
