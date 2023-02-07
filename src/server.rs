@@ -52,6 +52,7 @@ impl Server {
             Self::Tauri => "tauri",
             #[cfg(feature = "hyper")]
             Self::Hyper => "hyper",
+            _ => unreachable!(),
         }
     }
 
@@ -76,6 +77,7 @@ impl Server {
             Self::Tauri => false,
             #[cfg(feature = "hyper")]
             Self::Hyper => false,
+            _ => unreachable!(),
         }
     }
 }
