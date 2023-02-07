@@ -26,7 +26,7 @@ pub mod lambda;
 #[cfg(feature = "workers")]
 pub mod workers;
 
-/// support for [Cloudflare Workers](https://tauri.app)
+/// support for [Tauri](https://tauri.app)
 #[cfg(feature = "tauri")]
 pub mod tauri;
 
