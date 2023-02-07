@@ -47,7 +47,7 @@ impl Server {
             #[cfg(feature = "lambda")]
             Self::Lambda => "lambda",
             #[cfg(feature = "workers")]
-            Self::CloudflareWorkers => "cloudflare-workers",
+            Self::CloudflareWorkers => "workers",
             #[cfg(feature = "tauri")]
             Self::Tauri => "tauri",
             #[cfg(feature = "hyper")]
