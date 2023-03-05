@@ -9,7 +9,7 @@ use crate::{EndpointFn, Request};
 /// For most use cases you will want [GenericHttpEndpoint](httpz::GenericHttpEndpoint) instead of implementing this trait yourself.
 pub trait HttpEndpoint: Sized + Sync + Send + 'static {
     /// the type of your routes array. This allows the user to return either [Vec<http::Method>], [&[http::Method]] or [[http::Method; N]].
-    type Routes: AsRef<[Method]>;
+    type Routes: AsRef<[Method]> + Send;
     /// the type of the URL string
     type Url: AsRef<str>;
     /// the type of the function to handle the endpoint.

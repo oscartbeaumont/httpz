@@ -36,7 +36,6 @@ where
                 method_filter,
                 |state: State<S>, request: Request<Body>| async move {
                     let (mut parts, body) = request.into_parts();
-
                     parts.extensions.insert(state);
 
                     let body = match to_bytes(body).await {
@@ -79,6 +78,6 @@ impl crate::Request {
     where
         S: Clone + Send + Sync + 'static,
     {
-        self.0.extensions().get::<State<S>>().map(|state| &state.0)
+        self.extensions().get::<State<S>>().map(|state| &state.0)
     }
 }

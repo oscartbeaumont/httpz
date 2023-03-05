@@ -208,17 +208,17 @@ impl From<async_tungstenite::tungstenite::Message> for Message {
 }
 
 #[cfg(feature = "tokio-ws")]
-impl Into<async_tungstenite::tungstenite::Message> for Message {
-    fn into(self) -> async_tungstenite::tungstenite::Message {
-        match self {
-            Message::Text(string) => async_tungstenite::tungstenite::Message::Text(string),
-            Message::Binary(data) => async_tungstenite::tungstenite::Message::Binary(data),
-            Message::Ping(data) => async_tungstenite::tungstenite::Message::Ping(data),
-            Message::Pong(data) => async_tungstenite::tungstenite::Message::Pong(data),
+impl From<Message> for async_tungstenite::tungstenite::Message {
+    fn from(v: Message) -> Self {
+        match v {
+            Message::Text(string) => Self::Text(string),
+            Message::Binary(data) => Self::Binary(data),
+            Message::Ping(data) => Self::Ping(data),
+            Message::Pong(data) => Self::Pong(data),
             #[cfg(feature = "tokio-ws")]
-            Message::Close(frame) => async_tungstenite::tungstenite::Message::Close(frame),
+            Message::Close(frame) => Self::Close(frame),
             #[cfg(feature = "tokio-ws")]
-            Message::Frame(frame) => async_tungstenite::tungstenite::Message::Frame(frame),
+            Message::Frame(frame) => Self::Frame(frame),
         }
     }
 }

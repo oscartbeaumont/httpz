@@ -13,8 +13,8 @@ where
     pub async fn workers(self, mut request: worker::Request) -> worker::Result<worker::Response> {
         // let methods = self.endpoint.register(); // TODO: Handle HTTP methods
 
-        let mut req = Request::new(request.bytes().await?);
-        *req.method_mut() = match request.method() {
+        let mut parts = Request::<()>::default().into_parts().0;
+        parts.method = match request.method() {
             worker::Method::Get => http::Method::GET,
             worker::Method::Post => http::Method::POST,
             worker::Method::Put => http::Method::PUT,
@@ -25,14 +25,14 @@ where
             worker::Method::Trace => http::Method::TRACE,
             worker::Method::Patch => http::Method::PATCH,
         };
-        *req.uri_mut() = request
+        parts.uri = request
             .url()?
             .as_str()
             .try_into()
             .map_err(|err: InvalidUri| worker::Error::RustError(err.to_string()))?;
         // *req.version_mut() = ; // TODO: Does Cloudflare not give us this?
         for (k, v) in request.headers() {
-            req.headers_mut().insert(
+            parts.headers.insert(
                 HeaderName::from_str(&k)
                     .map_err(|err| worker::Error::RustError(err.to_string()))?,
                 HeaderValue::from_str(&v)
@@ -43,7 +43,11 @@ where
 
         match self
             .endpoint
-            .handler(crate::Request(req, Server::CloudflareWorkers))
+            .handler(crate::Request(
+                parts,
+                request.bytes().await?,
+                Server::CloudflareWorkers,
+            ))
             .await
             .into_response()
         {

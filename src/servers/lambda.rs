@@ -14,14 +14,14 @@ where
     TEndpoint: HttpEndpoint,
 {
     /// TODO
-    type Fut: Future<Output = Result<Response<Body>, http::Error>>;
+    type Fut: Future<Output = Result<Response<Body>, http::Error>> + Send + 'static;
 }
 
 impl<TEndpoint, TFunc, TFut> InternalTowerHandlerFunc<TEndpoint> for TFunc
 where
     TEndpoint: HttpEndpoint,
     TFunc: Fn(Arc<TEndpoint>, Request) -> TFut,
-    TFut: Future<Output = Result<Response<Body>, http::Error>>,
+    TFut: Future<Output = Result<Response<Body>, http::Error>> + Send + 'static,
 {
     type Fut = TFut;
 }
@@ -57,14 +57,15 @@ where
 {
     /// is called to mount the endpoint onto the AWS lambda runtime.
     pub fn lambda(mut self) -> TowerEndpoint<TEndpoint, impl InternalTowerHandlerFunc<TEndpoint>> {
-        let (url, methods) = self.endpoint.register();
+        let (_url, methods) = self.endpoint.register();
+        // TODO: Handle `_url`??
 
         TowerEndpoint(
             Arc::new(self.endpoint),
-            move |endpoint: Arc<TEndpoint>, request: Request| {
+            is_send(move |endpoint: Arc<TEndpoint>, request: Request| {
                 let is_correct_method = methods.as_ref().contains(request.method());
 
-                async move {
+                is_send(async move {
                     if !is_correct_method {
                         return Response::builder()
                             .status(StatusCode::METHOD_NOT_ALLOWED)
@@ -73,14 +74,12 @@ where
 
                     let (parts, body) = request.into_parts();
                     let fut = endpoint.handler(crate::Request(
-                        http::Request::from_parts(
-                            parts,
-                            match body {
-                                Body::Empty => vec![],
-                                Body::Text(text) => text.into_bytes(),
-                                Body::Binary(binary) => binary,
-                            },
-                        ),
+                        parts,
+                        match body {
+                            Body::Empty => vec![],
+                            Body::Text(text) => text.into_bytes(),
+                            Body::Binary(binary) => binary,
+                        },
                         Server::Lambda,
                     ));
 
@@ -94,8 +93,14 @@ where
                             .header("content-type", "text/html")
                             .body(err.to_string().into()),
                     }
-                }
-            },
+                })
+            }),
         )
     }
+}
+
+// Lambda runtime get's angry. These act as a safety net to prevent breaking the Lambda runtime inside user code.
+#[inline]
+fn is_send<T: Send>(t: T) -> T {
+    t
 }

@@ -32,6 +32,7 @@ pub enum Server {
 
 impl Server {
     /// convert the server into a string
+    #[allow(unreachable_patterns)]
     pub fn to_str(&self) -> &'static str {
         match self {
             #[cfg(feature = "actix-web")]
@@ -57,6 +58,7 @@ impl Server {
     }
 
     /// check if the server that handled this request supports upgrading the connection to a websocket.
+    #[allow(unreachable_patterns)]
     pub fn supports_websockets(&self) -> bool {
         match self {
             #[cfg(feature = "actix-web")]

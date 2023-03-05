@@ -22,7 +22,7 @@ where
            + 'static {
         let (_, methods) = self.endpoint.register();
         let endpoint = Arc::new(self.endpoint);
-        let methods = methods.as_ref().iter().cloned().collect::<Vec<_>>();
+        let methods = methods.as_ref().to_vec();
 
         let uri_scheme = uri_scheme.into();
         let url1 = format!("{}://localhost/", uri_scheme);
@@ -30,7 +30,7 @@ where
         let url3 = format!("http://{}.localhost/", uri_scheme);
 
         move |handle, req| {
-            let resp = if !methods.contains(&req.method()) {
+            let resp = if !methods.contains(req.method()) {
                 http::Response::builder().status(405).body(vec![]).unwrap()
             } else {
                 let uri = req.uri();
@@ -82,6 +82,6 @@ impl crate::Request {
     where
         R: Runtime,
     {
-        self.0.extensions().get::<AppHandle<R>>()
+        self.0.extensions.get::<AppHandle<R>>()
     }
 }

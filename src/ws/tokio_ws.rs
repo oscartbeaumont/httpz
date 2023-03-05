@@ -12,7 +12,9 @@ use http::{
 use hyper::upgrade::{OnUpgrade, Upgraded};
 use sha1::{Digest, Sha1};
 
+#[allow(clippy::declare_interior_mutable_const)] // TODO: Fix
 const UPGRADE: HeaderValue = HeaderValue::from_static("upgrade");
+#[allow(clippy::declare_interior_mutable_const)] // TODO: Fix
 const WEBSOCKET: HeaderValue = HeaderValue::from_static("websocket");
 
 use crate::{Error, HttpResponse, Request};
@@ -109,13 +111,13 @@ where
             return Ok(resp.status(StatusCode::BAD_REQUEST).body(vec![])?);
         }
 
-        let sec_websocket_key = match self.req.0.headers_mut().remove(header::SEC_WEBSOCKET_KEY) {
+        let sec_websocket_key = match self.req.headers_mut().remove(header::SEC_WEBSOCKET_KEY) {
             Some(sec_websocket_key) => sec_websocket_key,
             None => return Ok(resp.status(StatusCode::BAD_REQUEST).body(vec![])?),
         };
 
         // TODO: This is an Axum thing. Support for other services will be needed.
-        let on_upgrade = match self.req.0.extensions_mut().remove::<OnUpgrade>() {
+        let on_upgrade = match self.req.extensions_mut().remove::<OnUpgrade>() {
             Some(on_upgrade) => on_upgrade,
             None => return Ok(resp.status(StatusCode::BAD_REQUEST).body(vec![])?),
         };
@@ -176,7 +178,7 @@ fn sign(key: &[u8]) -> HeaderValue {
     let mut sha1 = Sha1::default();
     sha1.update(key);
     sha1.update(&b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"[..]);
-    HeaderValue::from_maybe_shared(base64::encode(&sha1.finalize()))
+    HeaderValue::from_maybe_shared(base64::encode(sha1.finalize()))
         .expect("base64 is a valid value")
 }
 

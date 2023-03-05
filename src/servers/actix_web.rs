@@ -35,18 +35,18 @@ where
             .to(move |request: HttpRequest, body: Bytes| {
                 let endpoint = endpoint.clone();
                 async move {
-                    let mut req = Request::new(body.to_vec());
+                    let mut parts = Request::<()>::default().into_parts().0;
                     // TODO: Reducing the cloning here
-                    *req.method_mut() = request.method().clone();
-                    *req.uri_mut() = request.uri().clone();
-                    *req.version_mut() = request.version().clone();
+                    parts.method = request.method().clone();
+                    parts.uri = request.uri().clone();
+                    parts.version = request.version();
                     for (k, v) in request.headers() {
-                        req.headers_mut().insert(HeaderName::from(k), v.clone());
+                        parts.headers.insert(HeaderName::from(k), v.clone());
                     }
-                    // *req.extensions_mut() = request.extensions().get_mut() // TODO: Pass extensions through
+                    // req.extensions = request.extensions().get_mut() // TODO: Pass extensions through
 
                     match endpoint
-                        .handler(crate::Request(req, Server::ActixWeb))
+                        .handler(crate::Request(parts, body.to_vec(), Server::ActixWeb))
                         .await
                         .into_response()
                     {
@@ -55,7 +55,7 @@ where
                             let mut resp = ActixHttpResponse::new(parts.status);
                             for (k, v) in parts.headers {
                                 if let Some(k) = k {
-                                    resp.headers_mut().insert(HeaderName::from(k), v);
+                                    resp.headers_mut().insert(k, v);
                                 }
                             }
                             resp.set_body(body)
