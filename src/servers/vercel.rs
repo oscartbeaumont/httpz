@@ -35,7 +35,7 @@ where
                         Body::Text(text) => text.into_bytes(),
                         Body::Binary(binary) => binary,
                     },
-                    Server::Lambda,
+                    Server::Vercel,
                 ));
 
                 match fut.await.into_response() {
