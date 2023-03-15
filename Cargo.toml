@@ -81,5 +81,6 @@ actix-web = "4.2.1"
 members = [
     "./examples/cf-workers",
     "./examples/netlify/netlify/functions/demo",
-    "./examples/tauri"
+    "./examples/tauri",
+	"./examples/vercel"
 ]

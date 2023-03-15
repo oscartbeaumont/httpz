@@ -1,6 +1,6 @@
-use http::StatusCode;
+use http::{Response, StatusCode};
 use std::sync::Arc;
-use vercel_runtime::{Body, Error, Response};
+use vercel_runtime::{Body, Error};
 
 use crate::{Endpoint, HttpEndpoint, HttpResponse, Server};
 
