@@ -31,6 +31,7 @@ where
 
         move |handle, req| {
             let resp = if !methods.contains(req.method()) {
+                #[allow(clippy::unwrap_used)] // TODO: Error handling
                 http::Response::builder().status(405).body(vec![]).unwrap()
             } else {
                 let uri = req.uri();
@@ -49,6 +50,7 @@ where
                 for (key, value) in req.headers() {
                     r = r.header(key, value);
                 }
+                #[allow(clippy::unwrap_used)] // TODO: Error handling
                 let req = r.body(req.body().clone()).unwrap(); // TODO: Avoid clone once my upstream PR merges + error handling
 
                 // TODO: This blocking sucks but is required for now. https://github.com/tauri-apps/wry/pull/872
@@ -60,6 +62,7 @@ where
                     Ok(resp) => resp,
                     Err(_err) => {
                         // TODO: Do something with `_err`
+                        #[allow(clippy::unwrap_used)] // TODO: Error handling
                         http::Response::builder().status(500).body(vec![]).unwrap()
                     }
                 }

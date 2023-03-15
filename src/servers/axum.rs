@@ -26,7 +26,7 @@ where
 
         let mut method_filter = MethodFilter::empty();
         for method in methods.as_ref().iter() {
-            // TODO: Error handling
+            #[allow(clippy::unwrap_used)] // TODO: Error handling
             method_filter.insert(MethodFilter::try_from(method.clone()).unwrap());
         }
 
