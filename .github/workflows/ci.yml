@@ -18,7 +18,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
-    - name: System dependencies
+    - name: [Linux] System dependencies
+      if: matrix.os == 'ubuntu-latest'
       run: sudo apt-get install libgtk-3-dev
     - name: Build
       run: cargo build --verbose
