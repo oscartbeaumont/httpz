@@ -1,0 +1,14 @@
+[package]
+name = "httpz-vercel-demo"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1", features = ["macros"] }
+serde_json = { version = "1.0.86", features = ["raw_value"] }
+httpz = { path = "../..", features = ["vercel"] }
+vercel_runtime = { version = "0.2.1" }
+
+[[bin]]
+name = "simple"
+path = "api/simple.rs"
