@@ -2,7 +2,7 @@ use httpz::{
     http::{Method, StatusCode},
     GenericEndpoint, Request,
 };
-use lambda_http::{run, Error, Response};
+use lambda_http::{Error, Response};
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -23,5 +23,5 @@ async fn main() -> Result<(), Error> {
     );
 
     // TODO: URL Prefix
-    run(endpoint.lambda()).await
+    endpoint.lambda().await
 }
