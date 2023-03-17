@@ -31,8 +31,7 @@ impl WebsocketUpgrade {
         handler: THandler,
     ) -> WebSocketUpgradeResponse<THandler, TFut>
     where
-        THandler:
-            for<'a> FnOnce(Request, Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,
+        THandler: FnOnce(Request, Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,
         TFut: Future<Output = ()> + Send + 'static,
     {
         WebSocketUpgradeResponse {
@@ -51,8 +50,7 @@ impl WebsocketUpgrade {
         handler: THandler,
     ) -> WebSocketUpgradeResponse<THandler, TFut>
     where
-        THandler:
-            for<'a> FnOnce(Request, Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,
+        THandler: FnOnce(Request, Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,
         TFut: Future<Output = ()> + Send + 'static,
     {
         WebSocketUpgradeResponse {
@@ -66,7 +64,7 @@ impl WebsocketUpgrade {
 /// TODO
 pub struct WebSocketUpgradeResponse<THandler, TFut>
 where
-    THandler: for<'a> FnOnce(Request, Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,
+    THandler: FnOnce(Request, Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,
     TFut: Future<Output = ()> + Send + 'static,
 {
     req: Request,
@@ -78,7 +76,7 @@ where
 // By only spawning the tokio task here, we ensure we aren't spawning tasks if the user forgets to return the websocket upgrade response from the handler.
 impl<THandler, TFut> HttpResponse for WebSocketUpgradeResponse<THandler, TFut>
 where
-    THandler: for<'a> FnOnce(Request, Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,
+    THandler: FnOnce(Request, Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,
     TFut: Future<Output = ()> + Send + 'static,
 {
     fn into_response(mut self) -> Result<Response<Vec<u8>>, Error> {

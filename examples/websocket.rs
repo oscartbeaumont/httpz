@@ -38,7 +38,7 @@ async fn main() {
     // Attach your endpoint to a HTTP server. This example uses Axum but it could be any other one.
     let app = axum::Router::new().nest("/", endpoint.axum());
     #[cfg(feature = "cookies")]
-    let app = app.route("/cookiesws", endpoint2.axum());
+    let app = app.nest("/cookiesws", endpoint2.axum());
 
     let addr = "[::]:9000".parse::<std::net::SocketAddr>().unwrap(); // This listens on IPv6 and IPv4
     println!("Axum listening on http://{}", addr);
