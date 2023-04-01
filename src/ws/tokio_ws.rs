@@ -4,6 +4,7 @@ use std::{
 };
 
 use async_tungstenite::{self, tokio::TokioAdapter, tungstenite::protocol, WebSocketStream};
+use base64::{engine::general_purpose::STANDARD, Engine};
 use futures::{Future, Sink, Stream};
 use http::{
     header::{self, HeaderName, SET_COOKIE},
@@ -176,7 +177,7 @@ fn sign(key: &[u8]) -> HeaderValue {
     let mut sha1 = Sha1::default();
     sha1.update(key);
     sha1.update(&b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"[..]);
-    HeaderValue::from_maybe_shared(base64::encode(sha1.finalize()))
+    HeaderValue::from_maybe_shared(STANDARD.encode(sha1.finalize()))
         .expect("base64 is a valid value")
 }
 
