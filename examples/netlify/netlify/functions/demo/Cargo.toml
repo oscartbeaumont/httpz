@@ -6,7 +6,7 @@ publish = false
 
 [dependencies]
 httpz = { path = "../../../../../", features = ["lambda"] }
-tokio = "1.27.0"
-lambda_http = "0.7.3"
-tracing-subscriber = "0.3.16"
+tokio = "1.29.1"
+lambda_http = "0.8.1"
+tracing-subscriber = "0.3.17"
 tracing = "0.1.37"
