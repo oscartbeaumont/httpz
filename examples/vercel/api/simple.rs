@@ -1,16 +1,10 @@
 use httpz::{
-    http::{Method, StatusCode},
+    http::{Method, Response, StatusCode},
     GenericEndpoint, Request,
 };
-use lambda_http::{Error, Response};
 
 #[tokio::main]
-async fn main() -> Result<(), Error> {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
-        .without_time()
-        .init();
-
+async fn main() {
     let endpoint = GenericEndpoint::new(
         "/*any", // TODO: Make this wildcard work
         [Method::GET, Method::POST],
@@ -18,10 +12,9 @@ async fn main() -> Result<(), Error> {
             Ok(Response::builder()
                 .status(StatusCode::OK)
                 .header("Content-Type", "text/html")
-                .body(b"httpz running on Netlify Functions!".to_vec())?)
+                .body(b"httpz running on Vercel!".to_vec())?)
         },
     );
 
-    // TODO: URL Prefix
-    endpoint.lambda().await
+    endpoint.vercel().await.unwrap()
 }

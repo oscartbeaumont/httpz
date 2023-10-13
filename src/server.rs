@@ -28,6 +28,9 @@ pub enum Server {
     /// support for [Hyper](https://github.com/hyperium/hyper)
     #[cfg(feature = "hyper")]
     Hyper,
+    /// support for [Vercel](https://github.com/vercel-community/rust)
+    #[cfg(feature = "vercel")]
+    Vercel,
 }
 
 impl Server {
@@ -53,6 +56,8 @@ impl Server {
             Self::Tauri => "tauri",
             #[cfg(feature = "hyper")]
             Self::Hyper => "hyper",
+            #[cfg(feature = "vercel")]
+            Self::Vercel => "vercel",
             _ => unreachable!(),
         }
     }
@@ -79,6 +84,8 @@ impl Server {
             Self::Tauri => false,
             #[cfg(feature = "hyper")]
             Self::Hyper => false,
+            #[cfg(feature = "vercel")]
+            Self::Vercel => false,
             _ => unreachable!(),
         }
     }

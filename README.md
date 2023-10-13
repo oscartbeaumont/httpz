@@ -1,7 +1,7 @@
 <div align="center">
     <h1>httpz</h1>
     <p><b>Code once, support every Rust webserver!</b></p>
-    <a href="https://discord.gg/4V9M5sksw8"><img src="https://img.shields.io/discord/1011665225809924136?style=flat-square" alt="Discord"></a>
+    <a href="https://discord.gg/JgqH8b4ycw"><img src="https://img.shields.io/discord/1011665225809924136?style=flat-square" alt="Discord"></a>
     <a href="https://crates.io/crates/httpz"><img src="https://img.shields.io/crates/d/httpz?style=flat-square" alt="Crates.io"></a>
     <a href="/LICENSE"><img src="https://img.shields.io/crates/l/httpz?style=flat-square" alt="License"></a>
 </div>

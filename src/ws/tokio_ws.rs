@@ -4,6 +4,7 @@ use std::{
 };
 
 use async_tungstenite::{self, tokio::TokioAdapter, tungstenite::protocol, WebSocketStream};
+use base64::{engine::general_purpose::STANDARD, Engine};
 use futures::{Future, Sink, Stream};
 use http::{
     header::{self, HeaderName, SET_COOKIE},
@@ -31,8 +32,7 @@ impl WebsocketUpgrade {
         handler: THandler,
     ) -> WebSocketUpgradeResponse<THandler, TFut>
     where
-        THandler:
-            for<'a> FnOnce(Request, Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,
+        THandler: FnOnce(Request, Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,
         TFut: Future<Output = ()> + Send + 'static,
     {
         WebSocketUpgradeResponse {
@@ -51,8 +51,7 @@ impl WebsocketUpgrade {
         handler: THandler,
     ) -> WebSocketUpgradeResponse<THandler, TFut>
     where
-        THandler:
-            for<'a> FnOnce(Request, Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,
+        THandler: FnOnce(Request, Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,
         TFut: Future<Output = ()> + Send + 'static,
     {
         WebSocketUpgradeResponse {
@@ -66,7 +65,7 @@ impl WebsocketUpgrade {
 /// TODO
 pub struct WebSocketUpgradeResponse<THandler, TFut>
 where
-    THandler: for<'a> FnOnce(Request, Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,
+    THandler: FnOnce(Request, Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,
     TFut: Future<Output = ()> + Send + 'static,
 {
     req: Request,
@@ -78,7 +77,7 @@ where
 // By only spawning the tokio task here, we ensure we aren't spawning tasks if the user forgets to return the websocket upgrade response from the handler.
 impl<THandler, TFut> HttpResponse for WebSocketUpgradeResponse<THandler, TFut>
 where
-    THandler: for<'a> FnOnce(Request, Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,
+    THandler: FnOnce(Request, Box<dyn Websocket + Send>) -> TFut + Send + Sync + 'static,
     TFut: Future<Output = ()> + Send + 'static,
 {
     fn into_response(mut self) -> Result<Response<Vec<u8>>, Error> {
@@ -178,7 +177,7 @@ fn sign(key: &[u8]) -> HeaderValue {
     let mut sha1 = Sha1::default();
     sha1.update(key);
     sha1.update(&b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"[..]);
-    HeaderValue::from_maybe_shared(base64::encode(sha1.finalize()))
+    HeaderValue::from_maybe_shared(STANDARD.encode(sha1.finalize()))
         .expect("base64 is a valid value")
 }
 

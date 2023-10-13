@@ -1,22 +1,20 @@
-use axum::{extract::State, response::IntoResponse, Extension, RequestPartsExt};
-use httpz::{
-    http::{Method, Response, StatusCode},
-    GenericEndpoint, Request,
-};
-
 #[derive(Debug, Clone)]
 pub struct MyCtx;
 
 #[cfg(feature = "axum")]
 #[tokio::main]
 async fn main() {
+    use httpz::{
+        http::{Method, Response, StatusCode},
+        GenericEndpoint, Request,
+    };
+
     let endpoint = GenericEndpoint::new(
         "/*any",
         [Method::GET, Method::POST],
         |req: Request| async move {
             // If the generic here doesn't match your Axum router it will return `None`. This isn't super typesafe but it's what you get for having to support 10 different web frameworks.
-            let axum_state = req.get_axum_state::<MyCtx>().unwrap();
-            let (mut parts, body) = req.into_parts();
+            let _axum_state = req.get_axum_state::<MyCtx>().unwrap();
 
             Ok(Response::builder()
                 .status(StatusCode::OK)

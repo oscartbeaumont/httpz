@@ -33,3 +33,7 @@ pub mod tauri;
 /// support for [Hyper](https://github.com/hyperium/hyper)
 #[cfg(feature = "hyper")]
 pub mod hyper;
+
+/// support for [Vercel](https://github.com/vercel-community/rust)
+#[cfg(feature = "vercel")]
+pub mod vercel;
