@@ -5,9 +5,9 @@ edition = "2021"
 
 [dependencies]
 tokio = { version = "1", features = ["macros"] }
-serde_json = { version = "1.0.103", features = ["raw_value"] }
+serde_json = { version = "1.0.107", features = ["raw_value"] }
 httpz = { path = "../..", features = ["vercel"] }
-vercel_runtime = { version = "1.0.2" }
+vercel_runtime = { version = "1.1.0" }
 
 [[bin]]
 name = "simple"
